@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html>
+
+ <style>
+      body { margin: 0; }
+ </style>
+<head>
+  <title>Maze Runner</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+
+  <style>
+      #blocker {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+      }
+
+      #instructions {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        text-align: center;
+        font-size: 20px;
+        cursor: pointer;
+      }
+    </style>
+</head>
+<body>
+<div id="blocker">
+      <div id="instructions">
+        <p style="font-size:36px">
+          Click to play
+        </p>
+        <p>
+          Move: WASD<br/>
+          Jump: SPACE<br/>
+          Ultimate: M<br/>
+          Run : Shift<br/>
+          Look: MOUSE
+        </p>
+      </div>
+    </div>
+
+  <script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.124.0/build/three.module.js';
+  import {FirstPersonControls} from './jsm/controls/FirstPersonControls3.js';
+  import { PointerLockControls } from './jsm/controls/PointerLockControls.js';
+  import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+  // import * as SkeletonUtils from './jsm/utils/SkeletonUtils.js';
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, .1, 1000);
+let renderer = new THREE.WebGLRenderer();
+       
+var shifft=11;
+var x=8;
+var y=8;
+const clock = new THREE.Clock();
+let controls;
+controls= new FirstPersonControls(camera,renderer.domElement);
+controls.movementSpeed = 7;
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+ const audioLoader = new THREE.AudioLoader();
+ const listener = new THREE.AudioListener();
+ const sound = new THREE.Audio( listener );
+ camera.add( listener );
+
+
+ const audioLoader1 = new THREE.AudioLoader();
+ const listener1 = new THREE.AudioListener();
+ const sound1 = new THREE.Audio( listener1 );
+ camera.add( listener1 );
+
+ const audioLoader2 = new THREE.AudioLoader();
+ const listener2 = new THREE.AudioListener();
+ const sound2 = new THREE.Audio( listener2 );
+ camera.add( listener2 );
+
+var disx=0;
+var disz=0;
+
+let materialArray = [];
+        let texture_ft = new THREE.TextureLoader().load( 'screenshots/redeclipse_ft.png');
+        let texture_bk = new THREE.TextureLoader().load( 'screenshots/redeclipse_bk.png');
+        let texture_up = new THREE.TextureLoader().load( 'screenshots/redeclipse_up.png');
+        let texture_dn = new THREE.TextureLoader().load( 'screenshots/redeclipse_dn.png');
+        let texture_rt = new THREE.TextureLoader().load( 'screenshots/redeclipse_rt.png');
+        let texture_lf = new THREE.TextureLoader().load( 'screenshots/redeclipse_lf.png');
+          
+        materialArray.push(new THREE.MeshBasicMaterial( { map: texture_ft }));
+        materialArray.push(new THREE.MeshBasicMaterial( { map: texture_bk }));
+        materialArray.push(new THREE.MeshBasicMaterial( { map: texture_up }));
+        materialArray.push(new THREE.MeshBasicMaterial( { map: texture_dn }));
+        materialArray.push(new THREE.MeshBasicMaterial( { map: texture_rt }));
+        materialArray.push(new THREE.MeshBasicMaterial( { map: texture_lf }));
+   
+        for (let i = 0; i < 6; i++)
+           materialArray[i].side = THREE.BackSide;
+        let skyboxGeo = new THREE.BoxGeometry( 1000, 1000, 1000);
+        let skybox = new THREE.Mesh( skyboxGeo, materialArray );
+        scene.add( skybox );  
+
+
+          stop(true);
+let controls2;
+controls2= new PointerLockControls(camera,renderer.domElement);
+const blocker = document.getElementById( 'blocker' );
+        const instructions = document.getElementById( 'instructions' );
+
+        instructions.addEventListener( 'click', function () {
+          controls2.lock();
+        } );
+
+        controls2.addEventListener( 'lock', function () {
+          instructions.style.display = 'none';
+          blocker.style.display = 'none';
+          controls.enabled=true;
+          stop(false);
+          audioLoader.load( 'sounds/Come-Play-with-Me.mp3', function( buffer ) {
+            sound.setBuffer( buffer );
+            sound.setLoop( true );
+            sound.setVolume( 0.2 );
+            sound.play();
+          });
+           audioLoader1.load( 'sounds/Scary.mp3', function( buffer ) {
+            sound1.setBuffer( buffer );
+            sound1.setLoop( true );
+            sound1.setVolume( 0.2 );
+            sound1.play();
+          });
+        } );
+
+        controls2.addEventListener( 'unlock', function () {
+          blocker.style.display = 'block';
+          instructions.style.display = '';
+          controls.enabled=false;
+            stop(true);
+            audioLoader.load( 'sounds/Come-Play-with-Me.mp3', function( buffer ) {
+            sound.setBuffer( buffer );
+            // sound.setLoop( true );
+            sound.setVolume( 0.2 );
+            sound.pause();
+          });
+            audioLoader1.load( 'sounds/Scary.mp3', function( buffer ) {
+            sound1.setBuffer( buffer );
+            // sound1.setLoop( true );
+            sound1.setVolume( 0.2 );
+            sound1.pause();
+          });
+          
+        } );
+
+        scene.add( controls2.getObject() );
+///////////////////////////////////////////////////////////////////////////////////
+
+   var emptyObject = new THREE.Object3D();
+    emptyObject.position.x = 0;
+    emptyObject.position.y = -0.01;
+    emptyObject.position.z = 1;
+  
+const loader1 = new GLTFLoader();
+        loader1.load('/js/examples/textures/mieruko-chan_shrine_ghost.glb', function (gltf) {
+           emptyObject.add(gltf.scene);
+           scene.add(emptyObject);
+           var model = gltf.scene;
+           model.position.x=0;
+           model.position.y=-1.1;
+           model.position.z=0;
+           model.scale.x=0.006;
+           model.scale.y=0.006;
+           model.scale.z=0.006;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+//Aniamtion
+// var mixers = [];
+// let model1=new THREE.Object3D();
+// let mixer1;
+// let mixer2;
+// let mixer3;
+//       //Animation
+//             // model1 = SkeletonUtils.clone( gltf.scene );
+//             // mixer1 = new THREE.AnimationMixer( model1 );
+//            // mixer1.clipAction( gltf.animations[ 0 ] ).play(); // run         
+//             // mixers.push( mixer1);           
+//            });
+ 
+////////////////////////////////////////////////////////////////////////////
+const loader2 = new GLTFLoader();
+        loader2.load('/js/examples/textures/maze/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+       let newMaterial = new THREE.MeshStandardMaterial({color: 0x362D2E});    
+        model.traverse((o) => {
+          if (o.isMesh) o.material = newMaterial;
+        });
+           model.position.x=-60;
+           model.position.y=2;
+           model.position.z=-55;
+           model.scale.x=3;
+           model.scale.y=3;
+           model.scale.z=3;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+
+////////////////////////////////////////////////////////////////////////////
+
+let player = {
+  height: 1,
+  turnSpeed: .1,
+  speed: 0.05,
+  jumpHeight: .2,
+  gravity: .01,
+  velocity: 0,
+  playerJumps: false
+};
+let ult2 = {
+  ult2Jumps: false
+};
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// scene.background = new THREE.Color("black");
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  let w = window.innerWidth,
+      h = window.innerHeight;
+  
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+
+});
+
+// Camera:Setup
+camera.position.set(-42, player.height, -75);
+camera.lookAt(new THREE.Vector3(-40, player.height, 0));
+//////////////////////////////////////////////////////
+let Box = new THREE.BoxGeometry(3, 3, 3);
+let BoxMaterial2 = new THREE.MeshBasicMaterial({ color: 0x580009});
+let Ability = new THREE.Mesh(Box, BoxMaterial2);
+
+Ability.position.x = Math.random() * 30;
+Ability.position.y = 1.5;
+Ability.position.z = Math.random() * 30;
+scene.add(Ability);
+function highJump(){
+  if(Math.abs(camera.position.x-Ability.position.x)<1&&Math.abs(camera.position.z-Ability.position.z)<1){
+    if(camera.position.y-Ability.position.y<0.5){
+    if(ult2.jumps) return false;
+    ult2.jumps = true;
+    player.velocity = -player.jumpHeight;
+    //camera.position.y=0;
+    camera.lookAt(new THREE.Vector3(0, -100, 0));
+    var gravity2 = -1;
+    player.velocity += gravity2;
+    camera.position.y -= player.velocity;
+   }
+ }
+}
+
+
+// Object:Plane
+let PlaneGeometry1 = new THREE.PlaneGeometry(100, 100);
+let texture2 = new THREE.TextureLoader().load("/js/examples/textures/floor/textures/floor_pattern_02_diff_4k.jpg");//difuse
+let texture3 = new THREE.TextureLoader().load("/js/examples/textures/floor/textures/floor_pattern_02_rough_4k.jpg");//rough
+let texture4 = new THREE.TextureLoader().load("/js/examples/textures/floor/textures/floor_pattern_02_disp_4k.png");//displace
+let texture5 = new THREE.TextureLoader().load("/js/examples/textures/floor/textures/floor_pattern_02_nor_gl_4k.png");//normal
+texture2.wrapS = texture2.wrapT = THREE.RepeatWrapping;
+texture3.wrapS = texture3.wrapT = THREE.RepeatWrapping
+texture4.wrapS = texture4.wrapT = THREE.RepeatWrapping
+texture5.wrapS = texture5.wrapT = THREE.RepeatWrapping
+texture2.repeat.x=15;
+texture2.repeat.y=15;
+texture3.repeat.x=15;
+texture3.repeat.y=15;
+texture4.repeat.x=15;
+texture4.repeat.y=15;
+texture5.repeat.x=15;
+texture5.repeat.y=15;
+let PlaneMaterial1 = new THREE.MeshPhongMaterial({map : texture2,roughnessMap : texture3,displacementMap : texture4,normalMap : texture5});
+let Plane1 = new THREE.Mesh(PlaneGeometry1, PlaneMaterial1);
+Plane1.position.y=-1.1;
+Plane1.rotation.x -= Math.PI / 2;
+Plane1.scale.x = 2;
+Plane1.scale.y = 2;
+Plane1.receiveShadow = true;
+scene.add(Plane1);
+
+//pointlight1
+let light1 = new THREE.PointLight(0xE09D37, 10,20,5);
+light1.position.set(7,6, 22.85,2);
+light1.castShadow = true;
+light1.shadow.camera.near = 2.5;
+scene.add(light1);
+// Ambient:Light:2
+let light2 = new THREE.AmbientLight("red", .05);
+light2.position.set(2, 10, 0);
+scene.add(light2);
+//pointlight3
+let light3 = new THREE.PointLight(0xE09D37, 10,20,5);
+light3.position.set(5,6,11);
+light3.castShadow = true;
+light3.shadow.camera.near = 2.5;
+scene.add(light3);
+//pointlight4
+let light4 = new THREE.PointLight(0xE09D37, 10,20,5);
+light4.position.set(-54,6,22.5);
+light4.castShadow = true;
+light4.shadow.camera.near = 2.5;
+scene.add(light4);
+//pointlight5
+let light5 = new THREE.PointLight(0xE09D37, 10,20,5);
+light5.position.set(6,6,-13);
+light5.castShadow = true;
+light5.shadow.camera.near = 2.5;
+scene.add(light5);
+//pointlight6
+let light6 = new THREE.PointLight(0xE09D37, 10,20,5);
+light6.position.set(-42,6,-65);
+light6.castShadow = true;
+light6.shadow.camera.near = 2.5;
+scene.add(light6);
+//pointlight7
+let light7 = new THREE.PointLight(0xE09D37, 10,20,5);
+light7.position.set(30,6,62);
+light7.castShadow = true;
+light7.shadow.camera.near = 2.5;
+scene.add(light7);
+//Directionlight
+let directionalLight = new THREE.DirectionalLight("0xffffff", 0.1);
+directionalLight.position.set( 0, 200, 0 );
+scene.add(directionalLight);
+
+// Controls:Listeners
+document.addEventListener('keydown', ({ keyCode }) => { controls[keyCode] = true });
+document.addEventListener('keyup', ({ keyCode }) => { controls[keyCode] = false });
+/////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+const loader3 = new GLTFLoader();
+        loader3.load('/js/examples/textures/Door/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=-4;
+           model.position.y=2.8;
+           model.position.z=12.5;
+           model.scale.x=0.16;
+           model.scale.y=0.1;
+           model.scale.z=0.16;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+
+//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+const loader4 = new GLTFLoader();
+        loader4.load('/js/examples/textures/Door/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=-4;
+           model.position.y=2.8;
+           model.position.z=-11.5;
+           model.scale.x=0.16;
+           model.scale.y=0.1;
+           model.scale.z=0.16;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+
+//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+const loader5 = new GLTFLoader();
+        loader5.load('/js/examples/textures/Door/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=-55.4;
+           model.position.y=2.8;
+           model.position.z=13;
+           model.scale.x=0.16;
+           model.scale.y=0.1;
+           model.scale.z=0.16;
+           model.rotation.y=4.7;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+
+//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+const loader6 = new GLTFLoader();
+        loader6.load('/js/examples/textures/Door/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=2;
+           model.position.y=2.8;
+           model.position.z=24.4;
+           model.scale.x=0.16;
+           model.scale.y=0.1;
+           model.scale.z=0.16;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+const loader7 = new GLTFLoader();
+        loader7.load('/js/examples/textures/lampa/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=10.5;
+           model.position.y=0.4;
+           model.position.z=22.85;
+           model.scale.x=0.03;
+           model.scale.y=0.03;
+           model.scale.z=0.03;
+           model.rotation.y=-1.6;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader8 = new GLTFLoader();
+        loader8.load('/js/examples/textures/lampa/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=1.5;
+           model.position.y=0.4;
+           model.position.z=11.3;
+           model.scale.x=0.03;
+           model.scale.y=0.03;
+           model.scale.z=0.03;
+           model.rotation.y=1.6;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader9 = new GLTFLoader();
+        loader9.load('/js/examples/textures/lampa/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=-54.2;
+           model.position.y=0.4;
+           model.position.z=18.5;
+           model.scale.x=0.03;
+           model.scale.y=0.03;
+           model.scale.z=0.03;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader10 = new GLTFLoader();
+        loader10.load('/js/examples/textures/lampa/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=1.5;
+           model.position.y=0.4;
+           model.position.z=-12.8;
+           model.scale.x=0.03;
+           model.scale.y=0.03;
+           model.scale.z=0.03;
+           model.rotation.y=1.6;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader11 = new GLTFLoader();
+        loader11.load('/js/examples/textures/Gate/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=-42;
+           model.position.y=4;
+           model.position.z=-58.5;
+           model.scale.x=8;
+           model.scale.y=8;
+           model.scale.z=8;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader12 = new GLTFLoader();
+        loader12.load('/js/examples/textures/Gate/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=30;
+           model.position.y=4;
+           model.position.z=57;
+           model.scale.x=8;
+           model.scale.y=8;
+           model.scale.z=8;
+           model.rotation.y=-3.1;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader13 = new GLTFLoader();
+        loader13.load('/js/examples/textures/home/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.z=-80;
+           model.scale.x=3;
+           model.scale.y=3;
+           model.scale.z=3;
+           model.rotation.y=Math.PI/9;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader14 = new GLTFLoader();
+        loader14.load('/js/examples/textures/creepy/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=30;
+           model.position.y=-10;
+           model.position.z=85;
+           model.scale.x=3;
+           model.scale.y=3;
+           model.scale.z=3;
+           model.rotation.y=Math.PI/9;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+/////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+const loader15 = new GLTFLoader();
+        loader15.load('/js/examples/textures/skull/scene.gltf', function (gltf) {
+           scene.add(gltf.scene);
+           var model = gltf.scene;
+           model.position.x=-42;
+           model.position.y=9;
+           model.position.z=-58.5;
+           model.scale.x=2.5;
+           model.scale.y=2.5;
+           model.scale.z=2.5;
+           model.rotation.y=Math.PI;
+           model.rotation.x=-0.5;
+           model.receiveShadow = true;
+           model.castShadow = true;
+           });
+///////////////////////////////////////////////////////////////////////////// 
+// ...
+ function control() {
+ //Controls:Engine 
+   if(controls[32]) { // space
+      if(player.jumps) return false;
+      player.jumps = true;
+      player.velocity = -player.jumpHeight;
+    }
+    
+  }
+
+function collision(){
+  //elmd5l
+  if(camera.position.z<=57&&camera.position.z>=38){
+    if(camera.position.x<33.5&&camera.position.x>32.5){
+      camera.position.x=32.6;
+    }
+    if(camera.position.x>26.5&&camera.position.x<27.5){
+      camera.position.x=27.5;
+    }
+  }
+
+//awl lfa ymeen 
+if(camera.position.z<=38&&camera.position.z>=31.5){
+    
+    if(camera.position.x>26.5&&camera.position.x<27.5){
+      camera.position.x=27.5;
+    }
+  }
+
+  if(camera.position.x<=35&&camera.position.x>=25){
+    if(camera.position.z<32.5&&camera.position.z>31.5){
+      camera.position.z=32.5;
+    }
+    
+  }
+
+//awl torka b3d awl lfa ymeen
+  if(camera.position.x<=40&&camera.position.x>=32){
+    if(camera.position.z<38.5&&camera.position.z>37.5){
+      camera.position.z=37.6;
+    }
+    if(camera.position.z>31.5&&camera.position.z<32.5){
+      camera.position.z=32.5;
+    }
+  }
+  //tany lfa
+   if(camera.position.x<=45&&camera.position.x>=40){
+    if(camera.position.z<38.5&&camera.position.z>37.5){
+      camera.position.z=37.5;
+    }
+    
+  }
+
+  if(camera.position.z<=38&&camera.position.z>=31.5){
+    
+    if(camera.position.x>44.5&&camera.position.x<45.5){
+      camera.position.x=44.5;
+    }
+  }
+//tany torka
+if(camera.position.z<=31.5&&camera.position.z>=14.5){
+    
+    if(camera.position.x>44.5&&camera.position.x<45.5){
+      camera.position.x=44.5;
+    }
+    if(camera.position.x>38.5&&camera.position.x<39.5){
+      camera.position.x=39.5;
+    }
+  }
+//talt lafa 
+ if(camera.position.z<=14.5&&camera.position.z>=8){
+    
+    if(camera.position.x>44.5&&camera.position.x<45.5){
+      camera.position.x=44.5;
+    }
+ }
+
+ if(camera.position.x>=39.5&&camera.position.x<=45){
+    if(camera.position.z>7.5&&camera.position.z<8.5){
+      camera.position.z=8.5;
+    }
+    
+  }
+  //talt torka
+  if(camera.position.x>=33.5&&camera.position.x<=39.5){
+    
+    if(camera.position.z<14.5&&camera.position.z>13.5){
+      camera.position.z=13.5;
+    }
+    if(camera.position.z>7.5&&camera.position.z<8.5){
+      camera.position.z=8.5;
+    }
+  }
+  //rab3 lfa
+  if(camera.position.x>=26.5&&camera.position.x<=33.5){
+     if(camera.position.z<14.5&&camera.position.z>13.5){
+      camera.position.z=13.5;
+    }
+    
+  }
+  if(camera.position.z<=13.5&&camera.position.z>=8){
+    
+    if(camera.position.x>26.5&&camera.position.x<27.5){
+      camera.position.x=27.5;
+    }
+ }
+ //rabe3 tor2a
+  if(camera.position.z<=8.5&&camera.position.z>=1.5){
+    if(camera.position.x<33.5&&camera.position.x>32.5){
+      camera.position.x=32.6;
+    }
+    if(camera.position.x>26.5&&camera.position.x<27.5){
+      camera.position.x=27.5;
+    }
+  }
+  //5ames lafa
+  if(camera.position.z<=8&&camera.position.z>=-4){
+    
+    if(camera.position.x>32.5&&camera.position.x<33.5){
+      camera.position.x=32.5;
+    }
+ }
+
+ if(camera.position.x>=26.5&&camera.position.x<=32.5){
+    if(camera.position.z>-4.5&&camera.position.z<-3.5){
+      camera.position.z=-3.5;
+    }
+    
+  }
+  //5ames tor2a
+  if(camera.position.x>=20.5&&camera.position.x<=27.5){
+    
+    if(camera.position.z>-4.5&&camera.position.z<-3.5){
+      camera.position.z=-3.5;
+    }
+    if(camera.position.z<2.5&&camera.position.z>1.5){
+      camera.position.z=1.5;
+    }
+  }
+  //sads lafa
+   if(camera.position.x<=21.5&&camera.position.x>=14.5){
+    
+    if(camera.position.z<2.5&&camera.position.z>1.5){
+      camera.position.z=1.5;
+    }
+ }
+ //sads torka ymeen 
+   if(camera.position.z<=-3.5&&camera.position.z>=-10.5){
+    if(camera.position.x<15.5&&camera.position.x>14.5){
+      camera.position.x=15.5;
+    }
+    if(camera.position.x>20.5&&camera.position.x<21.5){
+      camera.position.x=20.5;
+    }
+  }
+ //sab3 lfa
+   if(camera.position.z<=-9.5&&camera.position.z>=-16.5){
+    
+    if(camera.position.x>20.5&&camera.position.x<21.5){
+      camera.position.x=20.5;
+    }
+  }
+  if(camera.position.x>=15.5&&camera.position.x<=20.5){
+    if(camera.position.z<-15.5&&camera.position.z>-16.5){
+      camera.position.z=-15.5;
+    }
+    
+  }
+  //sabe3 tor2a + en deh m2fola
+  if(camera.position.x>=2.5&&camera.position.x<=15.5){
+    
+    if(camera.position.z<-15.5&&camera.position.z>-16.5){
+      camera.position.z=-15.5;
+    }
+    if(camera.position.z>-10.5&&camera.position.z<-9.5){
+      camera.position.z=-10.5;
+    }
+    
+  }
+ if (camera.position.z<=-9.5&&camera.position.z>=-16.5) {
+  if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=3.5;
+    }
+  }
+  //tamn torka
+   if(camera.position.x>=-14.5&&camera.position.x<=15.5){
+    
+    if(camera.position.z>-4.5&&camera.position.z<-3.5){
+      camera.position.z=-3.5;
+    }
+     if(camera.position.z<2.5&&camera.position.z>1.5){
+      camera.position.z=1.5;
+    }
+    
+  }
+// tamn lafa
+if(camera.position.x>=-22.5&&camera.position.x<=-14.5){
+     if(camera.position.z<2.5&&camera.position.z>1.5){
+      camera.position.z=1.5;
+    }
+  }
+
+ if(camera.position.z<=1.5&&camera.position.z>=-3.5) {
+  if(camera.position.x<-20.5&&camera.position.x>-21.5){
+      camera.position.x=-20.5;
+    }
+  }
+ //tas3 torka
+ if(camera.position.z<=-3.5&&camera.position.z>=-10.5){
+    
+    if(camera.position.x<-20.5&&camera.position.x>-21.5){
+      camera.position.x=-20.5;
+    }
+    if(camera.position.x<-14.5&&camera.position.x>-15.5){
+      camera.position.x=-15.5;
+    }
+  }
+  //tas3 lafa
+    if(camera.position.z<=-9.5&&camera.position.z>=-16.5){
+      if(camera.position.x<-20.5&&camera.position.x>-21.5){
+      camera.position.x=-20.5;
+    }
+  }
+   if(camera.position.x<=-14.5&&camera.position.x>=-20.5){
+     if(camera.position.z<-15.5&&camera.position.z>-16.5){
+      camera.position.z=-15.5;
+    }
+  }
+  //3ashr torka
+  if(camera.position.x<=-8.5&&camera.position.x>=-14.5){
+     if(camera.position.z<-15.5&&camera.position.z>-16.5){
+      camera.position.z=-15.5;
+    }
+    if(camera.position.z<-9.5&&camera.position.z>-10.5){
+      camera.position.z=-10.5;
+    }
+  }
+  //3ashr lafa
+  if(camera.position.x<=-2.5&&camera.position.x>=-9.5){
+     
+    if(camera.position.z<-9.5&&camera.position.z>-10.5){
+      camera.position.z=-10.5;
+    }
+  }
+  if(camera.position.z<=-9.5&&camera.position.z>=-16.5){
+     
+    if(camera.position.x<-2.5&&camera.position.x>-3.5){
+      camera.position.x=-3.5;
+    }
+  }
+
+  //torka 11
+  if (camera.position.z<=-16.5&&camera.position.z>=-46.5) {
+   if(camera.position.x<-2.5&&camera.position.x>-3.5){
+      camera.position.x=-3.5;
+    }
+    if(camera.position.x<-8.5&&camera.position.x>-9.5){
+      camera.position.x=-8.5;
+    }
+  }
+//lafa 11
+if(camera.position.z<=-45.5&&camera.position.z>=-52.5){
+      if(camera.position.x<-8.5&&camera.position.x>-9.5){
+      camera.position.x=-8.5;
+    }
+  }
+   if(camera.position.x<=-3.5&&camera.position.x>=-8.5){
+     if(camera.position.z<-51.5&&camera.position.z>-52.5){
+      camera.position.z=-51.5;
+    }
+  }
+  //tor2a 12
+  if(camera.position.x>=-3.5&&camera.position.x<=3.5){
+    
+    if(camera.position.z<-51.5&&camera.position.z>-52.5){
+      camera.position.z=-51.5;
+    }
+    if(camera.position.z>-46.5&&camera.position.z<-45.5){
+      camera.position.z=-46.5;
+    }
+  }
+  //lafa 12
+  if(camera.position.z<=-45.5&&camera.position.z>=-52.5){
+    
+    if(camera.position.x>8.5&&camera.position.x<9.5){
+      camera.position.x=8.5;
+    }
+ }
+
+ if(camera.position.x>=3.5&&camera.position.x<=8.5){
+    if(camera.position.z<-51.5&&camera.position.z>-52.5){
+      camera.position.z=-51.5;
+    }
+    
+  }
+//tor2a 13
+  if(camera.position.z<=-27.5&&camera.position.z>=-45.5){
+    
+    if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=3.5;
+    }
+    if(camera.position.x<9.5&&camera.position.x>8.5){
+      camera.position.x=8.5;
+    }
+  }
+  //lafa 13
+  if(camera.position.z<=-21.5&&camera.position.z>=-28.5){
+    
+    if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=3.5;
+    }
+ }
+
+ if(camera.position.x>=2.5&&camera.position.x<=9.5){
+    if(camera.position.z>-22.5&&camera.position.z<-21.5){
+      camera.position.z=-22.5;
+    }
+    
+  }
+  //tor2a 14
+  if(camera.position.x>=9.5&&camera.position.x<=27.5){
+    
+    if(camera.position.z>-28.5&&camera.position.z<-27.5){
+      camera.position.z=-27.5;
+    }
+    if(camera.position.z>-22.5&&camera.position.z<-21.5){
+      camera.position.z=-22.5;
+    }
+  }
+  //lafa 14
+  if(camera.position.x<=33.5&&camera.position.x>=27.5){
+     
+    if(camera.position.z>-22.5&&camera.position.z<-21.5){
+      camera.position.z=-22.5;
+    }
+  }
+  if(camera.position.z<=-21.5&&camera.position.z>=-28.5){
+     
+    if(camera.position.x>32.5&&camera.position.x<33.5){
+      camera.position.x=32.5;
+    }
+  }
+  //tor2a 15
+  if(camera.position.z<=-28.5&&camera.position.z>=-34.5){
+    
+    if(camera.position.x>32.5&&camera.position.x<33.5){
+      camera.position.x=32.5;
+    }
+    if(camera.position.x>26.5&&camera.position.x<27.5){
+      camera.position.x=27.5;
+    }
+  }
+  //lafa 15
+  if(camera.position.z<=-34.5&&camera.position.z>=-40.5){
+      if(camera.position.x>26.5&&camera.position.x<27.5){
+      camera.position.x=27.5;
+    }
+  }
+   if(camera.position.x<=33.5&&camera.position.x>=27.5){
+     if(camera.position.z<-39.5&&camera.position.z>-40.5){
+      camera.position.z=-39.5;
+    }
+  }
+//tor2a 16
+if(camera.position.x>=32.5&&camera.position.x<=39.5){
+    
+    if(camera.position.z>-40.5&&camera.position.z<-39.5){
+      camera.position.z=-39.5;
+    }
+    if(camera.position.z>-34.5&&camera.position.z<-33.5){
+      camera.position.z=-34.5;
+    }
+  }
+// lafa 16
+if(camera.position.z<=-33.5&&camera.position.z>=-40.5){
+    
+    if(camera.position.x>44.5&&camera.position.x<45.5){
+      camera.position.x=44.5;
+    }
+ }
+
+ if(camera.position.x>=38.5&&camera.position.x<=45.5){
+    if(camera.position.z>-40.5&&camera.position.z<-39.5){
+      camera.position.z=-39.5;
+    }
+    
+  }
+  //tor2a 17
+  if(camera.position.z<=-15.5&&camera.position.z>=-34.5){
+    
+    if(camera.position.x>44.5&&camera.position.x<45.5){
+      camera.position.x=44.5;
+    }
+    if(camera.position.x>38.5&&camera.position.x<39.5){
+      camera.position.x=39.5;
+    }
+  }
+  //lafa 17
+  if(camera.position.x>=38.5&&camera.position.x<=45.5){
+    if(camera.position.z>-10.5&&camera.position.z<-9.5){
+      camera.position.z=-10.5;
+    }
+  }
+
+  if(camera.position.z>=-17.5&&camera.position.z<=-9.5){
+    
+    if(camera.position.x>44.5&&camera.position.x<45.5){
+      camera.position.x=44.5;
+    }
+  }
+  //tor2a 18 w a5er deadend 
+  if(camera.position.x>=26.5&&camera.position.x<=38.5){
+    
+    if(camera.position.z>-10.5&&camera.position.z<-9.5){
+      camera.position.z=-10.5;
+    }
+    if(camera.position.z<-15.5&&camera.position.z>-16.5){
+      camera.position.z=-15.5;
+    }
+    
+  }
+  if (camera.position.z<=-9.5&&camera.position.z>=-16.5) {
+  if(camera.position.x<27.5&&camera.position.x>26.5){
+      camera.position.x=27.5;
+    }
+  }  
+  /////////////////////////////////////////////////////
+  //new start
+  //awel tor2a
+  if(camera.position.x>-45.5&&camera.position.x<-36.5){
+  if(camera.position.z<=-77&&camera.position.z>=-77.5){
+    camera.position.z=-77;
+   }
+ }
+if(camera.position.z<=-39.5&&camera.position.z>=-78.5){
+    
+    if(camera.position.x>-45.5&&camera.position.x<-44.5){
+      camera.position.x=-44.5;
+    }
+    if(camera.position.x<-38.5&&camera.position.x>-39.5){
+      camera.position.x=-39.5;
+    }
+  }
+  //awel lafa
+  if(camera.position.x<=-38.5&&camera.position.x>=-45.5){
+     
+    if(camera.position.z>-34.5&&camera.position.z<-33.5){
+      camera.position.z=-34.5;
+    }
+  }
+  if(camera.position.z<=-33.5&&camera.position.z>=-39.5){
+     
+    if(camera.position.x<-38.5&&camera.position.x>-39.5){
+      camera.position.x=-39.5;
+    }
+  }
+  //tany tor2a
+  if(camera.position.x>=-51.5&&camera.position.x<=-45.5){
+    
+    if(camera.position.z>-34.5&&camera.position.z<-33.5){
+      camera.position.z=-34.5;
+    }
+    if(camera.position.z>-40.5&&camera.position.z<-39.5){
+      camera.position.z=-39.5;
+    }
+  }
+  //tany lafa
+  if(camera.position.z<=-33.5&&camera.position.z>=-40.5){
+      if(camera.position.x>-57.5&&camera.position.x<-56.5){
+      camera.position.x=-56.5;
+    }
+  }
+   if(camera.position.x<=-50.5&&camera.position.x>=-57.5){
+     if(camera.position.z>-40.5&&camera.position.z<-39.5){
+      camera.position.z=-39.5;
+    }
+  }
+  //talet tor2a
+if(camera.position.z<=-27.5&&camera.position.z>=-33.5){
+    
+    if(camera.position.x>-57.5&&camera.position.x<-56.5){
+      camera.position.x=-56.5;
+    }
+    if(camera.position.x<-50.5&&camera.position.x>-51.5){
+      camera.position.x=-51.5;
+    }
+  }
+  //awel tkatoo3
+  if(camera.position.z<=-20.5&&camera.position.z>=-28.5){
+      if(camera.position.x>-57.5&&camera.position.x<-56.5){
+      camera.position.x=-56.5;
+    }
+  }
+   //talet tor2a w awel deadend
+   if(camera.position.z>=-22.5&&camera.position.z<=-9.5){
+    
+    if(camera.position.x>-57.5&&camera.position.x<-56.5){
+      camera.position.x=-56.5;
+    }
+    if(camera.position.x<-50.5&&camera.position.x>-51.5){
+      camera.position.x=-51.5;
+    }
+    
+  }
+  if (camera.position.x<=-50.5&&camera.position.x>=-57.5) {
+  if(camera.position.z<-9.5&&camera.position.z>-10.5){
+      camera.position.z=-10.5;
+    }
+  }  
+  //rabe3 tor2a
+if(camera.position.x>=-51.5&&camera.position.x<=-32.5){
+    
+    if(camera.position.z>-22.5&&camera.position.z<-21.5){
+      camera.position.z=-22.5;
+    }
+    if(camera.position.z>-28.5&&camera.position.z<-27.5){
+      camera.position.z=-27.5;
+    }
+  }
+  //tany tkato3
+   if(camera.position.x<=-26.5&&camera.position.x>=-32.5){
+     if(camera.position.z>-28.5&&camera.position.z<-27.5){
+      camera.position.z=-27.5;
+    }
+  }
+  //tkmlet rabe3 tor2a b3d el tkato3
+  if(camera.position.x>=-27.5&&camera.position.x<=-20.5){
+    
+    if(camera.position.z>-22.5&&camera.position.z<-21.5){
+      camera.position.z=-22.5;
+    }
+    if(camera.position.z>-28.5&&camera.position.z<-27.5){
+      camera.position.z=-27.5;
+    }
+  } 
+  //talet lafa
+  if(camera.position.x>=-21.5&&camera.position.x<=-14.5){
+    if(camera.position.z>-22.5&&camera.position.z<-21.5){
+      camera.position.z=-22.5;
+    }
+  }
+
+  if(camera.position.z>=-28.5&&camera.position.z<=-21.5){
+    
+    if(camera.position.x>-15.5&&camera.position.x<-14.5){
+      camera.position.x=-15.5;
+    }
+  }
+  //5ames tor2a
+  if(camera.position.z<=-27.5&&camera.position.z>=-34.5){
+    
+    if(camera.position.x>-21.5&&camera.position.x<-20.5){
+      camera.position.x=-20.5;
+    }
+    if(camera.position.x>-15.5&&camera.position.x<-14.5){
+      camera.position.x=-15.5;
+    }
+  }
+  //talet tkato3
+  if(camera.position.z<=-33.5&&camera.position.z>=-40.5){
+     
+   if(camera.position.x>-15.5&&camera.position.x<-14.5){
+      camera.position.x=-15.5;
+    }
+  }
+  //tany deadend
+  if(camera.position.x>-33.5&&camera.position.x<=-20.5){
+    
+    if(camera.position.z>-40.5&&camera.position.z<-39.5){
+      camera.position.z=-39.5;
+    }
+    if(camera.position.z<-33.5&&camera.position.z>-34.5){
+      camera.position.z=-34.5;
+    }
+    
+  }
+  if (camera.position.z<=-33.5&&camera.position.z>=-40.5) {
+  if(camera.position.x<-32.5&&camera.position.x>-33.5){
+      camera.position.x=-32.5;
+    }
+  }  
+  //talet deadend
+  if(camera.position.z<=-40.5&&camera.position.z>=-52.5){
+    
+    if(camera.position.x>-21.5&&camera.position.x<-20.5){
+      camera.position.x=-20.5;
+    }
+    if(camera.position.x>-15.5&&camera.position.x<-14.5){
+      camera.position.x=-15.5;
+    }
+  }
+  if (camera.position.x<=-14.5&&camera.position.x>=-21.5) {
+  if(camera.position.z>-52.5&&camera.position.z<-51.5){
+      camera.position.z=-51.5;
+    }
+  }   
+
+  /////////////////////////////////////////
+  //new again
+  //awel tor2a
+  if(camera.position.z<=8.5&&camera.position.z>=-21.5){
+    
+    if(camera.position.x>-33.5&&camera.position.x<-32.5){
+      camera.position.x=-32.5;
+    }
+    if(camera.position.x<-26.5&&camera.position.x>-27.5){
+      camera.position.x=-27.5;
+    }
+  }
+  //awel lafa
+  if(camera.position.z<=14.5&&camera.position.z>=8.5){
+    
+    if(camera.position.x>-33.5&&camera.position.x<-32.5){
+      camera.position.x=-32.5;
+    }
+ }
+
+ if(camera.position.x>=-33.5&&camera.position.x<=-26.5){
+    if(camera.position.z>13.5&&camera.position.z<14.5){
+      camera.position.z=13.5;
+    }
+  }
+  //tany tor2a
+  if(camera.position.x>=-26.5&&camera.position.x<=-8.5){
+    
+    if(camera.position.z>13.5&&camera.position.z<14.5){
+      camera.position.z=13.5;
+    }
+    if(camera.position.z<8.5&&camera.position.z>7.5){
+      camera.position.z=8.5;
+    }
+  }
+  //tany lafa
+  if(camera.position.z<=14.5&&camera.position.z>=7.5){
+    
+    if(camera.position.x<-2.5&&camera.position.x>-3.5){
+      camera.position.x=-3.5;
+    }
+ }
+
+ if(camera.position.x>=-9.5&&camera.position.x<=-2.5){
+    if(camera.position.z<8.5&&camera.position.z>7.5){
+      camera.position.z=8.5;
+    }
+  }
+  //talet tor2a 
+  if(camera.position.z<=20.5&&camera.position.z>=14.5){
+    
+    if(camera.position.x<-2.5&&camera.position.x>-3.5){
+      camera.position.x=-3.5;
+    }
+    if(camera.position.x<-8.5&&camera.position.x>-9.5){
+      camera.position.x=-8.5;
+    }
+  }
+  //awel tkato3
+  if(camera.position.z<=26.5&&camera.position.z>=19.5){
+      if(camera.position.x<-8.5&&camera.position.x>-9.5){
+      camera.position.x=-8.5;
+    }
+  }
+//awel deadend
+  if(camera.position.x>=-3.5&&camera.position.x<=9.5){
+    
+    if(camera.position.z>25.5&&camera.position.z<26.5){
+      camera.position.z=25.5;
+    }
+    if(camera.position.z<20.5&&camera.position.z>19.5){
+      camera.position.z=20.5;
+    }
+  }
+  if(camera.position.z<=26.5&&camera.position.z>=19.5){
+    
+    if(camera.position.x<9.5&&camera.position.x>8.5){
+      camera.position.x=8.5;
+    }
+ }
+ //tkmlet talet tor2a w yo3tabar rabe3 tor2a
+ if(camera.position.z<=32.5&&camera.position.z>=26.5){
+    
+    if(camera.position.x<-2.5&&camera.position.x>-3.5){
+      camera.position.x=-3.5;
+    }
+    if(camera.position.x<-8.5&&camera.position.x>-9.5){
+      camera.position.x=-8.5;
+    }
+  }
+  //talet lafa
+  if(camera.position.x>=-9.5&&camera.position.x<=-2.5){
+    if(camera.position.z>37.5&&camera.position.z<38.5){
+      camera.position.z=37.5;
+    }
+  }
+
+  if(camera.position.z>=31.5&&camera.position.z<=38.5){
+    
+    if(camera.position.x<-2.5&&camera.position.x>-3.5){
+      camera.position.x=-3.5;
+    }
+  }
+//rabe3 tor2a
+  if(camera.position.x>=-15.5&&camera.position.x<=-9.5){
+    
+    if(camera.position.z>37.5&&camera.position.z<38.5){
+      camera.position.z=37.5;
+    }
+    if(camera.position.z>31.5&&camera.position.z<32.5){
+      camera.position.z=32.5;
+    }
+  }
+  //rabe3 lafa
+  if(camera.position.z<=38.5&&camera.position.z>=31.5){
+      if(camera.position.x>-21.5&&camera.position.x<-20.5){
+      camera.position.x=-20.5;
+    }
+  }
+  if(camera.position.x<=-14.5&&camera.position.x>=-21.5){
+    if(camera.position.z>31.5&&camera.position.z<32.5){
+      camera.position.z=32.5;
+    }
+  }
+  //5ames tor2a
+  if(camera.position.z<=44.5&&camera.position.z>=38.5){
+    
+  if(camera.position.x>-21.5&&camera.position.x<-20.5){
+      camera.position.x=-20.5;
+    }
+    if(camera.position.x<-14.5&&camera.position.x>-15.5){
+      camera.position.x=-15.5;
+    }
+  }
+  //tany tkato3 
+  if(camera.position.x>=-21.5&&camera.position.x<=-14.5){
+    if(camera.position.z>49.5&&camera.position.z<50.5){
+      camera.position.z=49.5;
+    }
+  }
+  //sades tor2a 
+  if(camera.position.x>=-15.5&&camera.position.x<=15.5){
+    
+    if(camera.position.z>49.5&&camera.position.z<50.5){
+      camera.position.z=49.5;
+    }
+    if(camera.position.z>43.5&&camera.position.z<44.5){
+      camera.position.z=44.5;
+    }
+  }
+  //sades lafa
+  if(camera.position.x>=14.5&&camera.position.x<=21.5){
+    if(camera.position.z>49.5&&camera.position.z<50.5){
+      camera.position.z=49.5;
+    }
+  }
+
+  if(camera.position.z>=43.5&&camera.position.z<=50.5){
+    
+    if(camera.position.x<21.5&&camera.position.x>20.5){
+      camera.position.x=20.5;
+    }
+  }
+  //sabe3 tor2a
+  if(camera.position.z<=44.5&&camera.position.z>=37.5){
+    
+  if(camera.position.x<21.5&&camera.position.x>20.5){
+      camera.position.x=20.5;
+    }
+    if(camera.position.x<15.5&&camera.position.x>14.5){
+      camera.position.x=15.5;
+    }
+  }
+  //talet tkato3 
+  if(camera.position.z<=38.5&&camera.position.z>=31.5){
+   if(camera.position.x>20.5&&camera.position.x<21.5){
+      camera.position.x=20.5;
+    }
+  }
+  //tany deadend 
+  if(camera.position.x>=2.5&&camera.position.x<=15.5){
+    
+    if(camera.position.z>37.5&&camera.position.z<38.5){
+      camera.position.z=37.5;
+    }
+    if(camera.position.z>31.5&&camera.position.z<32.5){
+      camera.position.z=32.5;
+    }
+  }
+  if(camera.position.z<=38.5&&camera.position.z>=31.5){
+   if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=3.5;
+    }
+  }
+  //tkmlet sabe3 tor2a
+  if(camera.position.z<=32.5&&camera.position.z>=25.5){
+    
+    if(camera.position.x>20.5&&camera.position.x<21.5){
+      camera.position.x=20.5;
+    }
+    if(camera.position.x<15.5&&camera.position.x>14.5){
+      camera.position.x=15.5;
+    }
+  }
+  //rabe3 tkato3
+  if(camera.position.z<=26.5&&camera.position.z>=19.5){
+      if(camera.position.x<15.5&&camera.position.x>14.5){
+      camera.position.x=15.5;
+    }
+  }
+  //talet deadend
+  if(camera.position.x>=20.5&&camera.position.x<=33.5){
+    
+    if(camera.position.z>25.5&&camera.position.z<26.5){
+      camera.position.z=25.5;
+    }
+    if(camera.position.z<20.5&&camera.position.z>19.5){
+      camera.position.z=20.5;
+    }
+  }
+  if(camera.position.z<=26.5&&camera.position.z>=19.5){
+    
+    if(camera.position.x<33.5&&camera.position.x>32.5){
+      camera.position.x=32.5;
+    }
+ }
+ //tamen tor2a
+ if(camera.position.z<=20.5&&camera.position.z>=13.5){
+    
+    if(camera.position.x<15.5&&camera.position.x>14.5){
+      camera.position.x=15.5;
+    }
+    if(camera.position.x>20.5&&camera.position.x<21.5){
+      camera.position.x=20.5;
+    }
+  }
+  //tamen lafa
+  if(camera.position.z<=14.5&&camera.position.z>=7.5){
+    
+    if(camera.position.x>20.5&&camera.position.x<21.5){
+      camera.position.x=20.5;
+    }
+ }
+
+ if(camera.position.x>=14.5&&camera.position.x<=21.5){
+    if(camera.position.z<8.5&&camera.position.z>7.5){
+      camera.position.z=8.5;
+    }
+  }
+  //a5er deadend hena
+  if(camera.position.x>=2.5&&camera.position.x<=15.5){
+    
+    if(camera.position.z>13.5&&camera.position.z<14.5){
+      camera.position.z=13.5;
+    }
+    if(camera.position.z>7.5&&camera.position.z<8.5){
+      camera.position.z=8.5;
+    }
+  }
+  if(camera.position.z<=14.5&&camera.position.z>=7.5){
+   if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=3.5;
+    }
+  }
+  //new start again
+  //awel tor2a
+  if(camera.position.x>=-39.5&&camera.position.x<=-21.5){
+    
+    if(camera.position.z>49.5&&camera.position.z<50.5){
+      camera.position.z=49.5;
+    }
+    if(camera.position.z>43.5&&camera.position.z<44.5){
+      camera.position.z=44.5;
+    }
+  }
+  //awel lafa
+  if(camera.position.x>=-45.5&&camera.position.x<=-38.5){
+     if(camera.position.z>49.5&&camera.position.z<50.5){
+      camera.position.z=49.5;
+    }
+  }
+  if(camera.position.z>=43.5&&camera.position.z<=50.5){
+    
+    if(camera.position.x<-44.5&&camera.position.x>-45.5){
+      camera.position.x=-44.5;
+    }
+  }
+  //tany tor2a 
+  if(camera.position.z<=44.5&&camera.position.z>=37.5){
+    
+  if(camera.position.x<-44.5&&camera.position.x>-45.5){
+      camera.position.x=-44.5;
+    }
+    if(camera.position.x<-38.5&&camera.position.x>-39.5){
+      camera.position.x=-39.5;
+    }
+  }
+  //tany lafa
+if(camera.position.z<=38.5&&camera.position.z>=31.5){
+    
+    if(camera.position.x<-38.5&&camera.position.x>-39.5){
+      camera.position.x=-39.5;
+    }
+ }
+
+ if(camera.position.x>=-45.5&&camera.position.x<=-38.5){
+    if(camera.position.z<32.5&&camera.position.z>31.5){
+      camera.position.z=32.5;
+    }
+  }
+  //talet tor2a
+  if(camera.position.x>=-51.5&&camera.position.x<=-45.5){
+    
+    if(camera.position.z<32.5&&camera.position.z>31.5){
+      camera.position.z=32.5;
+    }
+    if(camera.position.z>37.5&&camera.position.z<38.5){
+      camera.position.z=37.5;
+    }
+  }
+  //talet lafa
+  if(camera.position.z<=38.5&&camera.position.z>=31.5){
+    
+    if(camera.position.x<-56.5&&camera.position.x>-57.5){
+      camera.position.x=-56.5;
+    }
+ }
+
+ if(camera.position.x>=-57.5&&camera.position.x<=-50.5){
+    if(camera.position.z>37.5&&camera.position.z<38.5){
+      camera.position.z=37.5;
+    }
+  }
+  //a5er 7aga f el le3ba w a5er deadend
+  if(camera.position.z<=31.5&&camera.position.z>=19.5){
+    
+    if(camera.position.x<-56.5&&camera.position.x>-57.5){
+      camera.position.x=-56.5;
+    }
+    if(camera.position.x>-51.5&&camera.position.x<-50.5){
+      camera.position.x=-51.5;
+    }
+  }
+  if (camera.position.x<=-50.5&&camera.position.x>=-57.5) {
+  if(camera.position.z>19.5&&camera.position.z<20.5){
+      camera.position.z=20.5;
+    }
+  }
+}
+
+ function calcAngleDegrees(y, x) {
+  return -Math.atan2(y-emptyObject.position.z,x-emptyObject.position.x)+Math.PI/2;
+}
+
+function enemy2(x,y){
+
+   var ccc=clock.getDelta();
+  var camera1 = {
+        x:camera.position.x,
+        z:camera.position.z
+  };
+  var enemy = {
+    x:emptyObject.position.x,
+    z:emptyObject.position.z
+  };
+  var disx = camera1.x-enemy.x;
+  var disz = camera1.z-enemy.z;
+  var length=Math.sqrt(Math.pow(disx,2)+Math.pow(disz,2));
+   if(length){
+      disx /= length;
+      disz /= length;
+   }
+  emptyObject.position.x += disx * ccc * x;
+  emptyObject.position.z += disz * ccc * y;
+  if(length<2){
+    if(camera.position.y-emptyObject.position.y<2){
+    stop(true);
+    var txt;
+  if (confirm("GameOver")) {
+    location.reload();
+  } else {
+    location.reload();
+  }
+  document.getElementById("demo").innerHTML = txt;
+   }
+  }
+}
+  
+///////////////////////////////////////////////////////////////////////
+function stop(z){
+  if(z==true){
+    x=0;
+    y=0;
+  }
+  else{
+    x=10;
+    y=10;
+  }
+}
+
+function end(){
+
+if(camera.position.x<=33.5&&camera.position.x>=26.5){
+ if(camera.position.z<=56&&camera.position.z>=55){
+  stop(true);
+    var txt;
+  if (confirm("You finished the game")) {
+    location.reload();
+  } else {
+    location.reload();
+  }
+  document.getElementById("demo").innerHTML = txt;
+   }
+ }
+}
+
+
+///////////////////////////////////////////////////////////////////////
+function ixMovementUpdate() {
+   player.velocity += player.gravity;
+   camera.position.y -= player.velocity;
+  
+   if(camera.position.y < player.height) {
+      camera.position.y = player.height;
+      player.jumps = false;
+      ult2.jumps = false;
+    }
+}
+ //////////////////////////////////////////////////////////////////////////
+ function soundd(){
+    audioLoader2.load( 'sounds/Shower-Door-Opening-A1-www.fesliyanstudios.com.mp3', function( buffer ) {
+            sound2.setBuffer( buffer );
+            sound2.setLoop( false );
+            sound2.setVolume( 0.7 );
+            sound2.play();
+          });
+ }
+ ///////////////////////////////////////////////////////////////////////
+function teleport(){
+  //Number 6 -> 7
+  if(camera.position.z<=14.5&&camera.position.z>=7.5){
+   if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=28;
+      camera.position.z=-13;
+      camera.lookAt(new THREE.Vector3(200,player.height, 0));
+      soundd();
+    }
+  }
+  //Number 8 -> 7
+  if (camera.position.z<=-9.5&&camera.position.z>=-16.5) {
+  if(camera.position.x>2.5&&camera.position.x<3.5){
+      camera.position.x=28;
+      camera.position.z=-13;
+      camera.lookAt(new THREE.Vector3(200,player.height, 0));
+      soundd();
+    }
+  }
+  //Number 5 -> 3
+  if(camera.position.x<=-50.5&&camera.position.x>=-57.5) {
+   if(camera.position.z>19.5&&camera.position.z<20.5){
+      camera.position.x=-18.5 
+      camera.position.z=-50.5;
+      camera.lookAt(new THREE.Vector3(-20,player.height, 0));
+      soundd();
+    }
+  }
+  //Number 4 -> 1
+   if(camera.position.z<=26.5&&camera.position.z>=19.5){
+    
+    if(camera.position.x<9.5&&camera.position.x>8.5){
+      camera.position.x=-54.5 //57.5
+      camera.position.z=-13.5;
+      camera.lookAt(new THREE.Vector3(300,player.height,0));
+      soundd();
+    }
+ }
+
+}
+ 
+
+  ////////////////////////////////////////////////////////////////////
+let SpotLight = new THREE.SpotLight(0xFFFFFF, 1.0,100,20 * Math.PI/180);
+    SpotLight.castShadow = true;
+
+function flashlight(){
+    scene.add(SpotLight);
+   camera.add( SpotLight.target );
+SpotLight.target.position.set( 0, 0, -1 );
+SpotLight.position.copy( camera.position );
+}
+////////////////////////////////////////////////////////////////////
+
+function ixLightcubeAnimation() {
+  let a = .01;
+  Ability.rotation.x += a;
+  Ability.rotation.y += a;
+  
+}
+
+function update() {
+  control();
+  ixMovementUpdate();
+  ixLightcubeAnimation();
+  collision();
+  
+}
+
+function render() {
+  renderer.render(scene, camera);
+  controls.update( clock.getDelta() * shifft);
+}
+
+function loop() {
+  
+  emptyObject.rotation.y=(calcAngleDegrees(camera.position.z,camera.position.x));
+  enemy2(x,y);
+  requestAnimationFrame(loop);
+  update();
+  render();
+  highJump();
+  teleport();
+  flashlight();
+  end();
+   //  var delta = clock.getDelta();
+  //  for ( const mixer of mixers ) mixer.update( delta );
+}
+
+loop();
+
+</script>
+</body>
+</html>
